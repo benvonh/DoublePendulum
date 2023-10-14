@@ -22,6 +22,8 @@ void Robot::Update(double dt)
 	constexpr double m2 = cfg::link::MASS[1];
 	constexpr double L1 = cfg::link::LENGTH[0];
 	constexpr double L2 = cfg::link::LENGTH[1];
+	constexpr double u1 = cfg::joint::FRICTION[0];
+	constexpr double u2 = cfg::joint::FRICTION[1];
 
 	// Compute forward dynamics
 	a1 = (trq1 - L1 * g * cos(q1) * (m1 + m2) - L2 * g * m2 * cos(q1 + q2) + L1 * L2 * m2 * w2 * sin(q2) * (2 * w1 + w2)) / (L1 * L1 * (-m2 * cos(q2) * cos(q2) + m1 + m2)) + ((L2 + L1 * cos(q2)) * (L1 * L2 * m2 * sin(q2) * w1 * w1 - trq2 + L2 * g * m2 * cos(q1 + q2))) / (L1 * L1 * L2 * (-m2 * cos(q2) * cos(q2) + m1 + m2));
@@ -30,8 +32,8 @@ void Robot::Update(double dt)
 	// Update joint states
 	m_Pos[0] = q1 + w1 * dt;
 	m_Pos[1] = q2 + w2 * dt;
-	m_Vel[0] = w1 + a1 * dt;
-	m_Vel[1] = w2 + a2 * dt;
+	m_Vel[0] = w1 + a1 * dt - u1 * w1;
+	m_Vel[1] = w2 + a2 * dt - u2 * w2;
 	m_Acc[0] = a1;
 	m_Acc[1] = a2;
 }
@@ -47,8 +49,8 @@ Frame Robot::GetLinkFrames()
 {
 	const double cosq1 = cos(m_Pos[0]);
 	const double sinq1 = sin(m_Pos[0]);
-	const double cosq2 = cos(m_Pos[1]);
-	const double sinq2 = sin(m_Pos[1]);
+	const double cosq12 = cos(m_Pos[0] + m_Pos[1]);
+	const double sinq12 = sin(m_Pos[0] + m_Pos[1]);
 	constexpr double L1 = cfg::link::LENGTH[0];
 	constexpr double L1_2 = cfg::link::LENGTH[0] / 2;
 	constexpr double L2_2 = cfg::link::LENGTH[1] / 2;
@@ -62,8 +64,8 @@ Frame Robot::GetLinkFrames()
 		},
 		Coord
 		{
-			L1 * cosq1 + L2_2 * cosq2,
-			L1 * sinq1 + L2_2 * sinq2
+			L1 * cosq1 + L2_2 * cosq12,
+			L1 * sinq1 + L2_2 * sinq12
 		}
 	};
 }

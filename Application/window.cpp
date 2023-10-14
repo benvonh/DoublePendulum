@@ -59,31 +59,13 @@ void Window::Run()
 					m_Robot.Restart(State{ 0.0, 0.0 });
 					break;
 				case SDLK_1:
-					m_Robot.Restart(State{ 1.0, 1.0 });
+					m_Robot.Restart(State{ 1.0, 0.0 });
 					break;
 				case SDLK_2:
-					m_Robot.Restart(State{ 2.0, 2.0 });
+					m_Robot.Restart(State{ 2.0, 0.0 });
 					break;
 				case SDLK_3:
-					m_Robot.Restart(State{ 3.0, 3.0 });
-					break;
-				case SDLK_4:
-					m_Robot.Restart(State{ 4.0, 4.0 });
-					break;
-				case SDLK_5:
-					m_Robot.Restart(State{ 5.0, 5.0 });
-					break;
-				case SDLK_6:
-					m_Robot.Restart(State{ 6.0, 6.0 });
-					break;
-				case SDLK_7:
-					m_Robot.Restart(State{ 7.0, 7.0 });
-					break;
-				case SDLK_8:
-					m_Robot.Restart(State{ 8.0, 8.0 });
-					break;
-				case SDLK_9:
-					m_Robot.Restart(State{ 9.0, 9.0 });
+					m_Robot.Restart(State{ 3.0, 0.0 });
 					break;
 				}
 				break;
@@ -171,7 +153,7 @@ void Window::RenderLinks()
 
 	const State& angles = m_Robot.GetPositions();
 	const double a1 = -angles[0];
-	const double a2 = -angles[1];
+	const double a2 = -angles[0] - angles[1];
 
 	DrawRectangle(coord1.x, coord1.y, l1, w1, a1);
 	DrawRectangle(coord2.x, coord2.y, l2, w2, a2);
