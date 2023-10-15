@@ -4,24 +4,26 @@
 // Application configuration
 namespace cfg
 {
-	// Window settings
-	namespace win
-	{
-		constexpr int DEFAULT_WIDTH = 1280;
-		constexpr int DEFAULT_HEIGHT = 720;
-	}
-
 	// Colour palette
 	namespace col
 	{
-		constexpr int RED[3]	= { 251,  73,  52 };
-		constexpr int GREEN[3]	= { 184, 187,  38 };
-		constexpr int YELLOW[3] = { 250, 189,  47 };
-		constexpr int BLUE[3]	= { 131, 165, 152 };
-		constexpr int PURPLE[3] = { 211, 134, 155 };
-		constexpr int AQUA[3]	= { 142, 192, 124 };
-		constexpr int GREY[3]	= { 146, 131, 116 };
-		constexpr int BLACK[3]	= {  40,  40,  40 };
+		constexpr int RED[3]     = { 204,   0,   0 };
+		constexpr int GREEN[3]   = {  78, 154,   6 };
+		constexpr int YELLOW[3]  = { 196, 160,   0 };
+		constexpr int BLUE[3]    = {  52, 101, 164 };
+		constexpr int PURPLE[3]  = { 108, 113, 196 };
+		constexpr int AQUA[3]    = {   6, 152, 154 };
+		constexpr int GREY[3]    = {  28,  28,  28 };
+		constexpr int BLACK[3]   = {  40,  40,  40 };
+		constexpr int WHITE[3]   = { 235, 219, 178 };
+	}
+
+	// Window settings
+	namespace win
+	{
+		constexpr int FONT_SIZE = 24;
+		constexpr int DEFAULT_WIDTH = 1280;
+		constexpr int DEFAULT_HEIGHT = 720;
 	}
 
 	// Link parameters
@@ -30,7 +32,7 @@ namespace cfg
 		constexpr auto COLOUR = col::YELLOW;
 		constexpr double MASS[2] = { 1.0, 1.0 };
 		constexpr double WIDTH[2] = { 0.01, 0.01 };
-		constexpr double LENGTH[2] = { 0.2, 0.2 };
+		constexpr double LENGTH[2] = { 0.1, 0.1 };
 	}
 
 	// Joint parameters
@@ -45,7 +47,7 @@ namespace cfg
 	namespace env
 	{
 		constexpr double GRAVITY = 9.81;
-		constexpr double TIME_STEP = 1e-6;
+		constexpr double TIME_STEP = 1e-9;
 	}
 
 	// Buffer settings

@@ -31,5 +31,8 @@
     <ClInclude Include="Robot.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Font.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
