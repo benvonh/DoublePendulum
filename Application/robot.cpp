@@ -5,7 +5,7 @@ Robot::Robot() : m_Pos{}, m_Vel{}, m_Acc{}
 {
 }
 
-void Robot::Update(double dt)
+void Robot::Update(const double dt)
 {
 	double a1, a2;
 	double trq1, trq2;

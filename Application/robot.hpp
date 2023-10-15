@@ -19,7 +19,7 @@ class Robot
 public:
 	Robot();
 
-	void Update(double dt);
+	void Update(const double dt);
 	void Restart(const State& s=State{ 0.0, 0.0 });
 
 	Frame GetLinkFrames();

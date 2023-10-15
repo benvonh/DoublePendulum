@@ -4,8 +4,8 @@
 	throw std::runtime_error(std::string(brief) + "\n\n(" + std::string(detail) + ')')
 
 Window::Window()
-	: m_Width{}, m_Height{}, m_CentreX{}, m_CentreY{},
-	m_Step{false}, m_Quit{false}, m_Pause{false}, m_Robot{}
+	: m_Width{}, m_Height{}, m_CentreX{}, m_CentreY{}, m_DeltaTime{}, m_Time{},
+	m_Step{false}, m_OneStep{false}, m_Quit{false}, m_Pause{false}, m_Robot{}
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		ThrowRuntime("Failed to initialise SDL video.", SDL_GetError());
@@ -41,13 +41,10 @@ Window::Window()
 	if (font_rw == nullptr)
 		ThrowRuntime("Failed to load font from memory.", SDL_GetError());
 
-	m_Font = TTF_OpenFontRW(font_rw, 1, 24);
+	m_Font = TTF_OpenFontRW(font_rw, 1, 14);
 
 	if (m_Font == nullptr)
 		ThrowRuntime("Failed to open font in SDL.", TTF_GetError());
-
-	if (SDL_GetCurrentDisplayMode(0, &m_DisplayMode) < 0)
-		ThrowRuntime("Failed to get current display mode.", SDL_GetError());
 }
 
 Window::~Window()
@@ -62,40 +59,17 @@ Window::~Window()
 
 void Window::Run()
 {
-	SDL_Event event;
-
-	Time time_prev = std::chrono::steady_clock::now();
+	m_Time = std::chrono::steady_clock::now();
 
 	while (!m_Quit)
 	{
 		HandleEvents();
 		UpdateInternals();
+		UpdateRobot();
 		RenderBackground();
-
-		Time time_now = std::chrono::steady_clock::now();
-		auto duration = std::chrono::duration_cast<nano>(time_now - time_prev);
-		double dt = duration.count() / 1e9;
-
-		if (dt > cfg::env::TIME_STEP)
-		{
-			if (m_Step)
-			{
-				m_Robot.Update(dt);
-				m_Step = false;
-				m_Pause = true;
-			}
-			else
-			if (!m_Pause)
-			{
-				m_Robot.Update(dt);
-			}
-			time_prev = time_now;
-		}
-
 		RenderLinks();
 		RenderJoints();
-		//RenderInfo();
-
+		RenderInfo();
 		SDL_RenderPresent(m_Renderer);
 	}
 }
@@ -112,7 +86,7 @@ void Window::HandleEvents()
 			switch (event.key.keysym.sym)
 			{
 			case SDLK_s:
-				m_Step = true;
+				m_OneStep = true;
 				break;
 			case SDLK_q:
 				m_Quit = true;
@@ -149,50 +123,42 @@ void Window::UpdateInternals()
 	SDL_GetWindowSize(m_Window, &m_Width, &m_Height);
 	m_CentreX = (double)m_Width / 2;
 	m_CentreY = (double)m_Height / 2;
+
+	Time now = std::chrono::steady_clock::now();
+	auto duration = std::chrono::duration_cast<nano>(now - m_Time);
+	double dt = duration.count() / 1e9;
+
+	if (dt > cfg::env::TIME_STEP)
+	{
+		m_Time = now;
+		m_Step = true;
+		m_DeltaTime = dt;
+	}
+}
+
+void Window::UpdateRobot()
+{
+	if (m_Step)
+	{
+		if (m_OneStep)
+		{
+			m_Robot.Update(m_DeltaTime);
+			m_OneStep = false;
+			m_Pause = true;
+		}
+		else
+		if (!m_Pause)
+		{
+			m_Robot.Update(m_DeltaTime);
+		}
+		m_Step = false;
+	}
 }
 
 void Window::RenderBackground()
 {
 	SetColour(cfg::col::GREY);
 	SDL_RenderClear(m_Renderer);
-}
-
-void Window::RenderJoints()
-{
-	auto DrawCircle = [this](const double x,
-							 const double y,
-							 const double r) -> void
-		{
-			int n_points = 0;
-			std::array<SDL_Point, cfg::buf::MAX_OUTLINE_SIZE> outline{};
-
-			const double inc = 1 / r;
-			SetColour(cfg::joint::COLOUR);
-
-			for (double a = 0.0; a < M_PI; a += inc)
-			{
-				const double rsina = r * sin(a);
-				const int px = (int)(x + r * cos(a));
-				const int py1 = (int)(y + rsina);
-				const int py2 = (int)(y - rsina);
-				outline[n_points++] = SDL_Point{ px, py1 };
-				outline[n_points++] = SDL_Point{ px, py2 };
-				SDL_RenderDrawLine(m_Renderer, px, py1, px, py2);
-			}
-
-			SetColour(cfg::col::BLACK);
-			SDL_RenderDrawPoints(m_Renderer, outline.data(), n_points);
-		};
-
-	constexpr auto r1 = cfg::joint::RADIUS[0] * 1000.0;
-	constexpr auto r2 = cfg::joint::RADIUS[1] * 1000.0;
-
-	const Frame joints = m_Robot.GetJointFrames();
-	const Coord coord1 = RobotToWindowFrame(joints[0]);
-	const Coord coord2 = RobotToWindowFrame(joints[1]);
-
-	DrawCircle(coord1.x, coord1.y, r1);
-	DrawCircle(coord2.x, coord2.y, r2);
 }
 
 void Window::RenderLinks()
@@ -268,14 +234,58 @@ void Window::RenderLinks()
 	DrawRectangle(coord2.x, coord2.y, l2, w2, a2);
 }
 
+void Window::RenderJoints()
+{
+	auto DrawCircle = [this](const double x,
+							 const double y,
+							 const double r) -> void
+		{
+			int n_points = 0;
+			std::array<SDL_Point, cfg::buf::MAX_OUTLINE_SIZE> outline{};
+
+			const double inc = 1 / r;
+			SetColour(cfg::joint::COLOUR);
+
+			for (double a = 0.0; a < M_PI; a += inc)
+			{
+				const double rsina = r * sin(a);
+				const int px = (int)(x + r * cos(a));
+				const int py1 = (int)(y + rsina);
+				const int py2 = (int)(y - rsina);
+				outline[n_points++] = SDL_Point{ px, py1 };
+				outline[n_points++] = SDL_Point{ px, py2 };
+				SDL_RenderDrawLine(m_Renderer, px, py1, px, py2);
+			}
+
+			SetColour(cfg::col::BLACK);
+			SDL_RenderDrawPoints(m_Renderer, outline.data(), n_points);
+		};
+
+	constexpr auto r1 = cfg::joint::RADIUS[0] * 1000.0;
+	constexpr auto r2 = cfg::joint::RADIUS[1] * 1000.0;
+
+	const Frame joints = m_Robot.GetJointFrames();
+	const Coord coord1 = RobotToWindowFrame(joints[0]);
+	const Coord coord2 = RobotToWindowFrame(joints[1]);
+
+	DrawCircle(coord1.x, coord1.y, r1);
+	DrawCircle(coord2.x, coord2.y, r2);
+}
+
 void Window::RenderInfo()
 {
-	SDL_Color colour = { 255, 255, 255, 255 };
-	SDL_Surface* surface = TTF_RenderText_Solid(m_Font, "hello", colour);
+	constexpr auto c = cfg::col::WHITE;
+	constexpr SDL_Color fg{ c[0], c[1], c[2], SDL_ALPHA_OPAQUE };
+
+	std::string info("Frame time: ");
+	info += std::to_string(m_DeltaTime);
+
+	SDL_Surface* surface = TTF_RenderText_Solid(m_Font, info.c_str(), fg);
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(m_Renderer, surface);
-	SDL_Rect rect = { 100, 100, surface->w, surface->h };
-	SDL_FreeSurface(surface);
+	SDL_Rect rect = { 0, 0, surface->w, surface->h };
 	SDL_RenderCopy(m_Renderer, texture, NULL, &rect);
+	SDL_FreeSurface(surface);
+	SDL_DestroyTexture(texture);
 }
 
 void Window::SetColour(const int rgb[3])

@@ -4,6 +4,14 @@
 // Application configuration
 namespace cfg
 {
+	// Window settings
+	namespace win
+	{
+		constexpr int FONT_SIZE = 24;
+		constexpr int DEFAULT_WIDTH = 1280;
+		constexpr int DEFAULT_HEIGHT = 720;
+	}
+
 	// Colour palette
 	namespace col
 	{
@@ -16,14 +24,6 @@ namespace cfg
 		constexpr int GREY[3]    = {  28,  28,  28 };
 		constexpr int BLACK[3]   = {  40,  40,  40 };
 		constexpr int WHITE[3]   = { 235, 219, 178 };
-	}
-
-	// Window settings
-	namespace win
-	{
-		constexpr int FONT_SIZE = 24;
-		constexpr int DEFAULT_WIDTH = 1280;
-		constexpr int DEFAULT_HEIGHT = 720;
 	}
 
 	// Link parameters
