@@ -7,7 +7,7 @@ namespace cfg
 	// Window settings
 	namespace win
 	{
-		constexpr int FONT_SIZE = 24;
+		constexpr int FONT_SIZE = 18;
 		constexpr int DEFAULT_WIDTH = 1280;
 		constexpr int DEFAULT_HEIGHT = 720;
 	}
@@ -47,12 +47,13 @@ namespace cfg
 	namespace env
 	{
 		constexpr double GRAVITY = 9.81;
-		constexpr double TIME_STEP = 1e-9;
+		constexpr double SIM_TIME = 1e-9;
+		constexpr double INFO_TIME = 1e-1;
 	}
 
 	// Buffer settings
 	namespace buf
 	{
-		constexpr int MAX_OUTLINE_SIZE = 1024;
+		constexpr size_t MAX_OUTLINE_SIZE = 1024;
 	}
 }

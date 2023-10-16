@@ -28,13 +28,13 @@ public:
 	void Run();
 
 private:
-	void HandleEvents();
 	void UpdateInternals();
 	void UpdateRobot();
 	void RenderBackground();
 	void RenderLinks();
 	void RenderJoints();
 	void RenderInfo();
+	void HandleEvents();
 	void SetColour(const int rgb[3]);
 	Coord RobotToWindowFrame(const Coord& coord);
 
@@ -43,8 +43,13 @@ private:
 	double m_CentreX;
 	double m_CentreY;
 	double m_DeltaTime;
+	double m_DeltaTimeSim;
+	double m_DeltaTimeInfo;
 	Time m_Time;
-	bool m_Step;
+	Time m_TimeSim;
+	Time m_TimeInfo;
+	bool m_StepSim;
+	bool m_StepInfo;
 	bool m_OneStep;
 	bool m_Quit;
 	bool m_Pause;
@@ -53,4 +58,10 @@ private:
 	TTF_Font* m_Font;
 	SDL_Window* m_Window;
 	SDL_Renderer* m_Renderer;
+	SDL_Texture* m_Texture;
+	SDL_Texture* m_TextureSim;
+	SDL_Texture* m_TextureInfo;
+	SDL_Rect m_TextureArea;
+	SDL_Rect m_TextureAreaSim;
+	SDL_Rect m_TextureAreaInfo;
 };

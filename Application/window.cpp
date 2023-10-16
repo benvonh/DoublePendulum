@@ -4,8 +4,12 @@
 	throw std::runtime_error(std::string(brief) + "\n\n(" + std::string(detail) + ')')
 
 Window::Window()
-	: m_Width{}, m_Height{}, m_CentreX{}, m_CentreY{}, m_DeltaTime{}, m_Time{},
-	m_Step{false}, m_OneStep{false}, m_Quit{false}, m_Pause{false}, m_Robot{}
+	: m_Width{}, m_Height{}, m_CentreX{}, m_CentreY{},
+	m_DeltaTime{}, m_DeltaTimeSim{}, m_DeltaTimeInfo{},
+	m_StepSim{ false }, m_StepInfo{ false }, m_OneStep{ false },
+	m_Quit{ false }, m_Pause{ false }, m_Robot{},
+	m_Texture{}, m_TextureSim{}, m_TextureInfo{},
+	m_TextureArea{}, m_TextureAreaSim{}, m_TextureAreaInfo{}
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		ThrowRuntime("Failed to initialise SDL video.", SDL_GetError());
@@ -41,7 +45,7 @@ Window::Window()
 	if (font_rw == nullptr)
 		ThrowRuntime("Failed to load font from memory.", SDL_GetError());
 
-	m_Font = TTF_OpenFontRW(font_rw, 1, 14);
+	m_Font = TTF_OpenFontRW(font_rw, 1, cfg::win::FONT_SIZE);
 
 	if (m_Font == nullptr)
 		ThrowRuntime("Failed to open font in SDL.", TTF_GetError());
@@ -52,6 +56,9 @@ Window::~Window()
 	TTF_CloseFont(m_Font);
 	TTF_Quit();
 
+	SDL_DestroyTexture(m_Texture);
+	SDL_DestroyTexture(m_TextureSim);
+	SDL_DestroyTexture(m_TextureInfo);
 	SDL_DestroyRenderer(m_Renderer);
 	SDL_DestroyWindow(m_Window);
 	SDL_Quit();
@@ -60,61 +67,19 @@ Window::~Window()
 void Window::Run()
 {
 	m_Time = std::chrono::steady_clock::now();
+	m_TimeSim = std::chrono::steady_clock::now();
+	m_TimeInfo = std::chrono::steady_clock::now();
 
 	while (!m_Quit)
 	{
-		HandleEvents();
 		UpdateInternals();
 		UpdateRobot();
 		RenderBackground();
 		RenderLinks();
 		RenderJoints();
 		RenderInfo();
+		HandleEvents();
 		SDL_RenderPresent(m_Renderer);
-	}
-}
-
-void Window::HandleEvents()
-{
-	SDL_Event event;
-
-	while (SDL_PollEvent(&event))
-	{
-		switch (event.type)
-		{
-		case SDL_KEYDOWN:
-			switch (event.key.keysym.sym)
-			{
-			case SDLK_s:
-				m_OneStep = true;
-				break;
-			case SDLK_q:
-				m_Quit = true;
-				return;
-			case SDLK_SPACE:
-				m_Pause = !m_Pause;
-				break;
-			case SDLK_r:
-				m_Robot.Restart();
-				break;
-			case SDLK_0:
-				m_Robot.Restart(State{ 0.0, 0.0 });
-				break;
-			case SDLK_1:
-				m_Robot.Restart(State{ 1.0, 0.0 });
-				break;
-			case SDLK_2:
-				m_Robot.Restart(State{ 2.0, 0.0 });
-				break;
-			case SDLK_3:
-				m_Robot.Restart(State{ 3.0, 0.0 });
-				break;
-			}
-			break;
-		case SDL_QUIT:
-			m_Quit = true;
-			return;
-		}
 	}
 }
 
@@ -125,20 +90,35 @@ void Window::UpdateInternals()
 	m_CentreY = (double)m_Height / 2;
 
 	Time now = std::chrono::steady_clock::now();
-	auto duration = std::chrono::duration_cast<nano>(now - m_Time);
-	double dt = duration.count() / 1e9;
 
-	if (dt > cfg::env::TIME_STEP)
+	auto since = std::chrono::duration_cast<nano>(now - m_Time);
+	auto since_sim = std::chrono::duration_cast<nano>(now - m_TimeSim);
+	auto since_info = std::chrono::duration_cast<nano>(now - m_TimeInfo);
+
+	double dt = since.count() / 1e9;
+	double dt_sim = since_sim.count() / 1e9;
+	double dt_info = since_info.count() / 1e9;
+
+	m_Time = now;
+	m_DeltaTime = dt;
+
+	if (dt_sim > cfg::env::SIM_TIME)
 	{
-		m_Time = now;
-		m_Step = true;
-		m_DeltaTime = dt;
+		m_TimeSim = now;
+		m_StepSim = true;
+		m_DeltaTimeSim = dt_sim;
+	}
+	if (dt_info > cfg::env::INFO_TIME)
+	{
+		m_TimeInfo = now;
+		m_StepInfo = true;
+		m_DeltaTimeInfo = dt_info;
 	}
 }
 
 void Window::UpdateRobot()
 {
-	if (m_Step)
+	if (m_StepSim)
 	{
 		if (m_OneStep)
 		{
@@ -151,7 +131,7 @@ void Window::UpdateRobot()
 		{
 			m_Robot.Update(m_DeltaTime);
 		}
-		m_Step = false;
+		m_StepSim = false;
 	}
 }
 
@@ -274,18 +254,98 @@ void Window::RenderJoints()
 
 void Window::RenderInfo()
 {
-	constexpr auto c = cfg::col::WHITE;
-	constexpr SDL_Color fg{ c[0], c[1], c[2], SDL_ALPHA_OPAQUE };
+	if (m_StepInfo)
+	{
+		constexpr auto c = cfg::col::WHITE;
+		constexpr SDL_Color fg{ c[0], c[1], c[2], SDL_ALPHA_OPAQUE };
 
-	std::string info("Frame time: ");
-	info += std::to_string(m_DeltaTime);
+		SDL_DestroyTexture(m_Texture);
+		SDL_DestroyTexture(m_TextureSim);
+		SDL_DestroyTexture(m_TextureInfo);
 
-	SDL_Surface* surface = TTF_RenderText_Solid(m_Font, info.c_str(), fg);
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(m_Renderer, surface);
-	SDL_Rect rect = { 0, 0, surface->w, surface->h };
-	SDL_RenderCopy(m_Renderer, texture, NULL, &rect);
-	SDL_FreeSurface(surface);
-	SDL_DestroyTexture(texture);
+		std::string text("Render time: ");
+		std::string text_sim("Simulation time: ");
+		std::string text_info("Info update time: ");
+
+		text += std::to_string(m_DeltaTime * 1000.0).substr(0, 4) + "ms";
+		text_sim += std::to_string(m_DeltaTimeSim * 1000.0).substr(0, 4) + "ms";
+		text_info += std::to_string(m_DeltaTimeInfo * 1000.0).substr(0, 6) + "ms";
+
+		SDL_Surface* surface = TTF_RenderText_Solid(m_Font, text.c_str(), fg);
+		SDL_Surface* surface_sim = TTF_RenderText_Solid(m_Font, text_sim.c_str(), fg);
+		SDL_Surface* surface_info = TTF_RenderText_Solid(m_Font, text_info.c_str(), fg);
+
+		m_Texture = SDL_CreateTextureFromSurface(m_Renderer, surface);
+		m_TextureSim = SDL_CreateTextureFromSurface(m_Renderer, surface_sim);
+		m_TextureInfo = SDL_CreateTextureFromSurface(m_Renderer, surface_info);
+
+		m_TextureArea = {
+			0, 0,
+			surface->w, surface->h
+		};
+		m_TextureAreaSim = {
+			0, surface->h,
+			surface_sim->w, surface_sim->h
+		};
+		m_TextureAreaInfo = {
+			0, surface->h + surface_sim->h,
+			surface_info->w, surface_info->h
+		};
+
+		SDL_FreeSurface(surface);
+		SDL_FreeSurface(surface_sim);
+		SDL_FreeSurface(surface_info);
+
+		m_StepInfo = false;
+	}
+	
+	SDL_RenderCopy(m_Renderer, m_Texture, NULL, &m_TextureArea);
+	SDL_RenderCopy(m_Renderer, m_TextureSim, NULL, &m_TextureAreaSim);
+	SDL_RenderCopy(m_Renderer, m_TextureInfo, NULL, &m_TextureAreaInfo);
+}
+
+void Window::HandleEvents()
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			switch (event.key.keysym.sym)
+			{
+			case SDLK_q:
+				m_Quit = true;
+				break;
+			case SDLK_s:
+				m_OneStep = true;
+				break;
+			case SDLK_SPACE:
+				m_Pause = !m_Pause;
+				break;
+			case SDLK_r:
+				m_Robot.Restart();
+				break;
+			case SDLK_0:
+				m_Robot.Restart(State{ 0.0, 0.0 });
+				break;
+			case SDLK_1:
+				m_Robot.Restart(State{ 1.0, 0.0 });
+				break;
+			case SDLK_2:
+				m_Robot.Restart(State{ 2.0, 0.0 });
+				break;
+			case SDLK_3:
+				m_Robot.Restart(State{ 3.0, 0.0 });
+				break;
+			}
+			break;
+		case SDL_QUIT:
+			m_Quit = true;
+			break;
+		}
+	}
 }
 
 void Window::SetColour(const int rgb[3])

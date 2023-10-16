@@ -9,8 +9,6 @@ void Robot::Update(const double dt)
 {
 	double a1, a2;
 	double trq1, trq2;
-	trq1 = 0;
-	trq2 = 0;
 
 	// Rename important variables
 	const double q1 = m_Pos[0];
@@ -25,9 +23,18 @@ void Robot::Update(const double dt)
 	constexpr double u1 = cfg::joint::FRICTION[0];
 	constexpr double u2 = cfg::joint::FRICTION[1];
 
+	// Set input torque
+	trq1 = 0;
+	trq2 = 0;
+
 	// Compute forward dynamics
-	a1 = (trq1 - L1 * g * cos(q1) * (m1 + m2) - L2 * g * m2 * cos(q1 + q2) + L1 * L2 * m2 * w2 * sin(q2) * (2 * w1 + w2)) / (L1 * L1 * (-m2 * cos(q2) * cos(q2) + m1 + m2)) + ((L2 + L1 * cos(q2)) * (L1 * L2 * m2 * sin(q2) * w1 * w1 - trq2 + L2 * g * m2 * cos(q1 + q2))) / (L1 * L1 * L2 * (-m2 * cos(q2) * cos(q2) + m1 + m2));
-	a2 = -((L2 + L1 * cos(q2)) * (trq1 - L1 * g * cos(q1) * (m1 + m2) - L2 * g * m2 * cos(q1 + q2) + L1 * L2 * m2 * w2 * sin(q2) * (2 * w1 + w2))) / (L1 * L1 * L2 * (-m2 * cos(q2) * cos(q2) + m1 + m2)) - ((L1 * L2 * m2 * sin(q2) * w1 * w1 - trq2 + L2 * g * m2 * cos(q1 + q2)) * (L1 * L1 * m1 + L1 * L1 * m2 + L2 * L2 * m2 + 2 * L1 * L2 * m2 * cos(q2))) / (L1 * L1 * L2 * L2 * m2 * (-m2 * cos(q2) * cos(q2) + m1 + m2));
+	const double cosq1 = cos(q1);
+	const double cosq2 = cos(q2);
+	const double sinq1 = sin(q1);
+	const double sinq2 = sin(q2);
+	const double cosq12 = cos(q1 + q2);
+	a1 = (trq1 - L1 * g * cosq1 * (m1 + m2) - L2 * g * m2 * cosq12 + L1 * L2 * m2 * w2 * sinq2 * (2 * w1 + w2)) / (L1 * L1 * (-m2 * cosq2 * cosq2 + m1 + m2)) + ((L2 + L1 * cosq2) * (L1 * L2 * m2 * sinq2 * w1 * w1 - trq2 + L2 * g * m2 * cosq12)) / (L1 * L1 * L2 * (-m2 * cosq2 * cosq2 + m1 + m2));
+	a2 = -((L2 + L1 * cosq2) * (trq1 - L1 * g * cosq1 * (m1 + m2) - L2 * g * m2 * cosq12 + L1 * L2 * m2 * w2 * sinq2 * (2 * w1 + w2))) / (L1 * L1 * L2 * (-m2 * cosq2 * cosq2 + m1 + m2)) - ((L1 * L2 * m2 * sinq2 * w1 * w1 - trq2 + L2 * g * m2 * cosq12) * (L1 * L1 * m1 + L1 * L1 * m2 + L2 * L2 * m2 + 2 * L1 * L2 * m2 * cosq2)) / (L1 * L1 * L2 * L2 * m2 * (-m2 * cosq2 * cosq2 + m1 + m2));
 
 	// Update joint states
 	m_Pos[0] = q1 + w1 * dt;
