@@ -40,7 +40,7 @@ namespace cfg
 	{
 		constexpr auto COLOUR = col::RED;
 		constexpr double RADIUS[2] = { 0.01, 0.01 };
-		constexpr double FRICTION[2] = {0.001, 0.001};
+		constexpr double FRICTION[2] = {0.1, 0.1};
 	}
 
 	// Physics environment

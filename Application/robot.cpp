@@ -24,8 +24,8 @@ void Robot::Update(const double dt)
 	constexpr double u2 = cfg::joint::FRICTION[1];
 
 	// Set input torque
-	trq1 = 0;
-	trq2 = 0;
+	trq1 = -u1 * w1;
+	trq2 = -u2 * w2;
 
 	// Compute forward dynamics
 	const double cosq1 = cos(q1);
@@ -39,8 +39,8 @@ void Robot::Update(const double dt)
 	// Update joint states
 	m_Pos[0] = q1 + w1 * dt;
 	m_Pos[1] = q2 + w2 * dt;
-	m_Vel[0] = w1 + a1 * dt - u1 * w1;
-	m_Vel[1] = w2 + a2 * dt - u2 * w2;
+	m_Vel[0] = w1 + a1 * dt;
+	m_Vel[1] = w2 + a2 * dt;
 	m_Acc[0] = a1;
 	m_Acc[1] = a2;
 }
