@@ -1,19 +1,19 @@
 #pragma once
 
+#include "Font.hpp"
+#include "Robot.hpp"
+#include "Config.hpp"
+
+#include <SDL.h>
+#include <SDL_ttf.h>
+#include <math.h>
+
 #include <array>
 #include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
 #include <stdexcept>
-
-#include <math.h>
-#include <SDL.h>
-#include <SDL_ttf.h>
-
-#include "Config.hpp"
-#include "Robot.hpp"
-#include "Font.hpp"
 
 
 using nano = std::chrono::nanoseconds;

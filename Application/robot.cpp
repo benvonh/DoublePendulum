@@ -7,8 +7,10 @@ Robot::Robot() : m_Pos{}, m_Vel{}, m_Acc{}
 
 void Robot::Update(const double dt)
 {
-	double a1, a2;
+	// Input torque
 	double trq1, trq2;
+	// Output acceleration
+	double a1, a2;
 
 	// Rename important variables
 	const double q1 = m_Pos[0];
@@ -24,6 +26,7 @@ void Robot::Update(const double dt)
 	constexpr double u2 = cfg::joint::FRICTION[1];
 
 	// Set input torque
+	
 	trq1 = -u1 * w1;
 	trq2 = -u2 * w2;
 
@@ -45,9 +48,9 @@ void Robot::Update(const double dt)
 	m_Acc[1] = a2;
 }
 
-void Robot::Restart(const State& s)
+void Robot::Restart()
 {
-	m_Pos = s;
+	m_Pos = { 0.0, 0.0 };
 	m_Vel = { 0.0, 0.0 };
 	m_Acc = { 0.0, 0.0 };
 }

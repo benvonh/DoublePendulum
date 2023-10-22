@@ -1,8 +1,8 @@
-#include <exception>
+#include "Window.hpp"
 
 #include <Windows.h>
 
-#include "Window.hpp"
+#include <exception>
 
 #define ErrorBox(msg) MessageBoxA(NULL, msg, "Error", MB_ICONERROR | MB_OK)
 

@@ -1,7 +1,9 @@
+#include "Font.hpp"
 #include "window.hpp"
 
 #define ThrowRuntime(brief, detail) \
 	throw std::runtime_error(std::string(brief) + "\n\n(" + std::string(detail) + ')')
+
 
 Window::Window()
 	: m_Width{}, m_Height{}, m_CentreX{}, m_CentreY{},
@@ -102,13 +104,13 @@ void Window::UpdateInternals()
 	m_Time = now;
 	m_DeltaTime = dt;
 
-	if (dt_sim > cfg::env::SIM_TIME)
+	if (dt_sim > cfg::win::SIM_TIME)
 	{
 		m_TimeSim = now;
 		m_StepSim = true;
 		m_DeltaTimeSim = dt_sim;
 	}
-	if (dt_info > cfg::env::INFO_TIME)
+	if (dt_info > cfg::win::INFO_TIME)
 	{
 		m_TimeInfo = now;
 		m_StepInfo = true;
@@ -325,19 +327,8 @@ void Window::HandleEvents()
 				m_Pause = !m_Pause;
 				break;
 			case SDLK_r:
-				m_Robot.Restart();
-				break;
 			case SDLK_0:
-				m_Robot.Restart(State{ 0.0, 0.0 });
-				break;
-			case SDLK_1:
-				m_Robot.Restart(State{ 1.0, 0.0 });
-				break;
-			case SDLK_2:
-				m_Robot.Restart(State{ 2.0, 0.0 });
-				break;
-			case SDLK_3:
-				m_Robot.Restart(State{ 3.0, 0.0 });
+				m_Robot.Restart();
 				break;
 			}
 			break;

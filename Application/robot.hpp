@@ -1,8 +1,8 @@
 #pragma once
 
-#include <array>
-
 #include "Config.hpp"
+
+#include <array>
 
 
 struct Coord
@@ -20,7 +20,7 @@ public:
 	Robot();
 
 	void Update(const double dt);
-	void Restart(const State& s=State{ 0.0, 0.0 });
+	void Restart();
 
 	Frame GetLinkFrames();
 	Frame GetJointFrames();

@@ -10,6 +10,8 @@ namespace cfg
 		constexpr int FONT_SIZE = 18;
 		constexpr int DEFAULT_WIDTH = 1280;
 		constexpr int DEFAULT_HEIGHT = 720;
+		constexpr double SIM_TIME = 1e-9;
+		constexpr double INFO_TIME = 1e-1;
 	}
 
 	// Colour palette
@@ -40,15 +42,13 @@ namespace cfg
 	{
 		constexpr auto COLOUR = col::RED;
 		constexpr double RADIUS[2] = { 0.01, 0.01 };
-		constexpr double FRICTION[2] = {0.1, 0.1};
+		constexpr double FRICTION[2] = { 0.05, 0.1 };
 	}
 
 	// Physics environment
 	namespace env
 	{
 		constexpr double GRAVITY = 9.81;
-		constexpr double SIM_TIME = 1e-9;
-		constexpr double INFO_TIME = 1e-1;
 	}
 
 	// Buffer settings
